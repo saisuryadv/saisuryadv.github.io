@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sai Surya Duvvuri</title>
+    <meta name="description" content="Sai Surya Duvvuri — PhD student at UT Austin, researching optimization and attention mechanisms for LLMs.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="topnav">
+    <a href="#news">News</a>
+    <a href="#publications">Publications</a>
+    <a href="CV_sai.pdf">CV</a>
+</nav>
+
+<div class="container">
+
+    <!-- Header / Profile -->
+    <header class="header">
+        <div class="profile-section">
+            <img src="photo.jpg" alt="Sai Surya Duvvuri" class="profile-photo">
+            <div class="profile-info">
+                <h1>Sai Surya Duvvuri</h1>
+                <p class="affiliation">PhD Student, Computer Science</p>
+                <p class="affiliation">The University of Texas at Austin</p>
+                <div class="social-links">
+                    <!-- Email -->
+                    <a href="mailto:saisurya@cs.utexas.edu" title="Email" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <span>Email</span>
+                    </a>
+                    <!-- Google Scholar -->
+                    <a href="https://scholar.google.com/citations?user=UL3980gAAAAJ&hl=en" title="Google Scholar" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor"><path d="M343.759 106.662V79.43l19.765-15.43H149.634L20.476 176.274h85.656c-.155 2.125-.219 4.046-.219 6.226 0 20.844 7.219 38.086 21.672 51.86 14.453 13.797 32.251 20.648 53.327 20.648 4.923 0 9.75-.368 14.438-1.024-2.907 6.5-4.375 12.523-4.375 18.142 0 9.875 4.5 20.43 13.467 31.642-39.234 2.67-68.061 9.733-86.437 21.163-10.531 6.5-19 14.704-25.39 24.531-6.391 9.9-9.578 20.515-9.578 31.962 0 9.648 2.062 18.336 6.219 26.062 4.157 7.726 9.578 14.07 16.312 18.984 6.718 4.968 14.469 9.101 23.219 12.469 8.734 3.344 17.406 5.718 26.061 7.062 8.627 1.342 17.205 1.999 25.706 1.999 13.469 0 26.954-1.735 40.547-5.188 13.562-3.484 26.28-8.641 38.171-15.492 11.86-6.805 21.516-16.087 28.922-27.718 7.39-11.68 11.095-24.805 11.095-39.336 0-11.016-2.25-21.039-6.75-30.141-4.469-9.072-9.938-16.541-16.453-22.344-6.501-5.813-13-11.155-19.515-15.968-6.501-4.845-12-9.75-16.469-14.813-4.485-5.047-6.734-10.054-6.734-14.984 0-4.921 1.734-9.672 5.216-14.266 3.454-4.609 7.674-9.048 12.61-13.305 4.937-4.25 9.875-8.968 14.796-14.133 4.922-5.147 9.141-11.827 12.61-20.008 3.485-8.18 5.203-17.445 5.203-27.757 0-13.453-2.547-24.461-7.547-33.313-.594-1.023-1.218-1.804-1.875-3.023l56.907-46.672v17.119c-7.393.93-6.624 5.346-6.624 10.635v128.667c0 5.958 4.875 10.834 10.834 10.834h3.989c5.958 0 10.834-4.875 10.834-10.834V117.293c0-5.277.777-9.688-6.562-10.63zM236.399 329.141c1.141.75 3.704 2.781 7.718 6.038 4.05 3.244 6.797 5.696 8.266 7.415 1.438 1.663 3.579 4.165 6.376 7.547 2.813 3.374 4.718 6.304 5.719 8.734 1 2.477 2.016 5.461 3.046 8.946.986 3.445 1.485 6.976 1.485 10.562 0 17.048-6.563 29.68-19.656 37.859-13.125 8.18-28.767 12.274-46.938 12.274-9.187 0-18.203-1.093-27.062-3.195-8.844-2.117-17.312-5.336-25.391-9.602-8.078-4.258-14.577-10.203-19.5-17.797-4.938-7.64-7.407-16.414-7.407-26.25 0-10.32 2.797-19.29 8.422-26.906 5.594-7.625 12.938-13.392 22.032-17.315 9.062-3.946 18.25-6.742 27.562-8.398 9.312-1.703 18.797-2.555 28.438-2.555 4.469 0 7.936.25 10.405.696.454.219 3.031 2.07 7.734 5.563 4.704 3.462 7.626 5.595 8.75 6.384zm-3.358-100.578c-7.406 8.86-17.735 13.288-30.954 13.288-11.859 0-22.297-4.765-31.265-14.312-9-9.523-15.423-20.328-19.344-32.43-3.938-12.11-5.906-23.985-5.906-35.649 0-13.694 3.595-25.352 10.781-34.976 7.187-9.65 17.499-14.485 30.938-14.485 11.875 0 22.374 5.038 31.437 15.157 9.094 10.085 15.61 21.413 19.517 33.968 3.922 12.539 5.873 24.53 5.873 35.984 0 13.447-3.702 24.61-11.077 33.455z"/></svg>
+                        <span>Scholar</span>
+                    </a>
+                    <!-- CV -->
+                    <a href="CV_sai.pdf" title="CV" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <span>CV</span>
+                    </a>
+                    <!-- GitHub -->
+                    <a href="https://github.com/saisuryadv" title="GitHub" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                        <span>GitHub</span>
+                    </a>
+                    <!-- LinkedIn -->
+                    <a href="https://www.linkedin.com/in/sai-surya-duvvuri-79903511b/" title="LinkedIn" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        <span>LinkedIn</span>
+                    </a>
+                    <!-- Twitter/X -->
+                    <a href="https://x.com/dvsaisurya" title="Twitter/X" class="icon-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span>Twitter</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- About -->
+    <section class="about">
+        <p>
+            Hi, I'm Sai! I am a fifth-year PhD student in Computer Science at UT Austin, advised by
+            <a href="https://www.cs.utexas.edu/~inderjit/">Prof. Inderjit S. Dhillon</a>.
+            My research goal is building <strong>data-efficient LLMs</strong> through
+            (a) <strong>efficient architectures</strong> for long-context understanding and reasoning, and
+            (b) <strong>optimization algorithms</strong> which gets the best out of each batch.
+            My work usually has a linear algebraic flavour, utilizing theoretical insights
+            to build algorithms with strong empirical performance — and has been adopted at
+            <strong>Google</strong>, <strong>Meta</strong>, and <strong>Microsoft</strong>.
+        </p>
+        <p>
+            Before my PhD, I spent two years at <strong>Microsoft Research</strong> collaborating with
+            Neeraj Kayal, Ankit Garg, and Venkata N. Padmanabhan — where I got hooked on linear algebra and machine learning.
+            I completed my B.Tech in CS from <strong>IIT Kharagpur</strong>.
+            I have been fortunate to intern at <strong>Google Ads</strong>, <strong>Google DeepMind</strong>,
+            <strong>Meta (FAIR)</strong>, and <strong>IBM Research</strong>, where I met amazing collaborators
+            including <a href="https://scholar.google.com/citations?user=m2qHgbwAAAAJ&hl=en">Rohan Anil</a>, <a href="http://manzil.ml/">Manzil Zaheer</a>, <a href="https://web.cs.ucla.edu/~chohsieh/">Cho-Jui Hsieh</a>, and <a href="https://abhijitmishra.github.io/">Abhijit Mishra</a>.
+        </p>
+    </section>
+
+    <!-- News -->
+    <section id="news" class="news">
+        <h2>News</h2>
+
+        <div class="news-scroll">
+            <div class="news-year">
+                <h3>2026</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">Jan</span>
+                        <span class="news-text">Started as Student Researcher at <strong>Google</strong>, working on Diffusion and Recursive Transformers.</span>
+                    </li>
+                    <li>
+                        <span class="news-date">Jan</span>
+                        <span class="news-text">Two papers from my time at <strong>Meta (FAIR)</strong> accepted to <strong>ICLR 2026</strong>: <em>The Art of Scaling RL Compute for LLMs</em> <span class="oral-badge">Oral</span> and <em>Test-Time Training for Long-Context LLMs</em>!</span>
+                    </li>
+                    <li>
+                        <span class="news-date">Jan</span>
+                        <span class="news-text">Three papers under review at <strong>ICML 2026</strong>.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="news-year">
+                <h3>2025</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">May</span>
+                        <span class="news-text">Started as Visiting Researcher at <strong>Meta (FAIR)</strong>, working on novel attention mechanisms for thinking LLMs.</span>
+                    </li>
+                    <li>
+                        <span class="news-date">May</span>
+                        <span class="news-text"><em>LASER: Attention with Exponential Transformation</em> accepted to <strong>ICML 2025</strong>!</span>
+                    </li>
+                    <li>
+                        <span class="news-date">Jan</span>
+                        <span class="news-text"><em>LoRA Done RITE</em> accepted as <span class="oral-badge">Oral</span> at <strong>ICLR 2025</strong> — work from my time at <strong>Google</strong>!</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="news-year">
+                <h3>2024</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">May</span>
+                        <span class="news-text">Started as Student Researcher at <strong>Google</strong>, working on novel attention mechanisms.</span>
+                    </li>
+                    <li>
+                        <span class="news-date">Jan</span>
+                        <span class="news-text"><em>CASPR: Combining Axes Preconditioners through Kronecker Approximation</em> accepted to <strong>ICLR 2024</strong>!</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="news-year">
+                <h3>2023</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">Sep</span>
+                        <span class="news-text">Two papers accepted to <strong>NeurIPS 2023</strong>: <em>SONew</em> and <em>Block Low-Rank Preconditioner with Shared Basis</em>!</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="news-year">
+                <h3>2021</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">Aug</span>
+                        <span class="news-text">Started PhD in Computer Science at <strong>The University of Texas at Austin</strong>.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="news-year">
+                <h3>2019</h3>
+                <ul class="news-list">
+                    <li>
+                        <span class="news-date">May</span>
+                        <span class="news-text">Received the <strong>Best B.Tech Thesis Award</strong> at <strong>IIT Kharagpur</strong>.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Preprints -->
+    <section id="preprints" class="publications">
+        <h2>Preprints</h2>
+
+        <div class="pub-item">
+            <img src="papers/lucid.png" alt="LUCID" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2602.10410">LUCID: Attention with Preconditioned Representations</a>
+                </div>
+                <div class="pub-authors">
+                    <strong>Sai Surya Duvvuri</strong>*, Nirmal Patel*, Nilesh Gupta, Inderjit S. Dhillon
+                </div>
+                <div class="pub-venue"><em>Under review at ICML 2026</em></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2602.10410">[arXiv]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/iha.png" alt="IHA" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">Interleaved Head Attention</div>
+                <div class="pub-authors">
+                    <strong>Sai Surya Duvvuri</strong>*, Chanakya Ekbote*, Rachit Bansal, Rishabh Tiwari, Devvrit Khatri, David Brandfonbrener, Paul Liang, Inderjit S. Dhillon, Manzil Zaheer
+                </div>
+                <div class="pub-venue"><em>Under review at ICML 2026</em></div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/adaptive-reg.png" alt="Adaptive Reg" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">Adaptive Regularization through Coupled Kronecker Factoring</div>
+                <div class="pub-authors">
+                    <strong>Sai Surya Duvvuri</strong>, Cho-Jui Hsieh, Inderjit S. Dhillon
+                </div>
+                <div class="pub-venue"><em>Under review at ICML 2026</em></div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/fast-simplex.png" alt="Fast and Simplex" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2507.02754">Fast and Simplex: 2-Simplicial Attention in Triton</a>
+                </div>
+                <div class="pub-authors">
+                    Aurko Roy, Timothy Chou, <strong>Sai Surya Duvvuri</strong>, Sijia Chen, Jiecao Yu, Xiaodong Wang, Manzil Zaheer, Rohan Anil
+                </div>
+                <div class="pub-venue"><em>Preprint</em></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2507.02754">[arXiv]</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Publications -->
+    <section id="publications" class="publications">
+        <h2>Publications</h2>
+
+        <!-- 2026 -->
+        <h3>2026</h3>
+
+        <div class="pub-item">
+            <img src="papers/scaling-rl.png" alt="Scaling RL" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2510.13786">The Art of Scaling Reinforcement Learning Compute for LLMs</a>
+                </div>
+                <div class="pub-authors">
+                    Devvrit Khatri, Lovish Madaan, Rishabh Tiwari, Rachit Bansal, <strong>Sai Surya Duvvuri</strong>, Manzil Zaheer, Inderjit S. Dhillon, David Brandfonbrener, Rishabh Agarwal
+                </div>
+                <div class="pub-venue"><strong>ICLR 2026</strong> <span class="oral-badge">Oral</span></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2510.13786">[arXiv]</a>
+                    <a href="https://openreview.net/forum?id=FMjeC9Msws">[OpenReview]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/ttt.png" alt="TTT" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2512.13898">Let's (not) just put things in Context: Test-Time Training for Long-Context LLMs</a>
+                </div>
+                <div class="pub-authors">
+                    Rachit Bansal, Aston Zhang, Rishabh Tiwari, Lovish Madaan, <strong>Sai Surya Duvvuri</strong>, Devvrit Khatri, David Brandfonbrener, David Alvarez-Melis, Prajjwal Bhargava, Mihir Sanjay Kale, Samy Jelassi
+                </div>
+                <div class="pub-venue"><strong>ICLR 2026</strong></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2512.13898">[arXiv]</a>
+                    <a href="https://openreview.net/forum?id=H0bcEdPCoc">[OpenReview]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2025 -->
+        <h3>2025</h3>
+
+        <div class="pub-item">
+            <img src="papers/lora-rite.png" alt="LoRA RITE" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2410.20625">LoRA Done RITE: Robust Invariant Transformation Equilibration for LoRA Optimization</a>
+                </div>
+                <div class="pub-authors">
+                    Jui-Nan Yen, Si Si, Zhao Meng, Felix Yu, <strong>Sai Surya Duvvuri</strong>, Inderjit S. Dhillon, Cho-Jui Hsieh, Sanjiv Kumar
+                </div>
+                <div class="pub-venue"><strong>ICLR 2025</strong> <span class="oral-badge">Oral</span></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2410.20625">[arXiv]</a>
+                    <a href="https://openreview.net/forum?id=VpWki1v2P8">[OpenReview]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/laser.png" alt="LASER" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2411.03493">LASER: Attention with Exponential Transformation</a>
+                </div>
+                <div class="pub-authors">
+                    <strong>Sai Surya Duvvuri</strong>, Inderjit S. Dhillon
+                </div>
+                <div class="pub-venue"><strong>ICML 2025</strong></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2411.03493">[arXiv]</a>
+                    <a href="https://proceedings.mlr.press/v267/duvvuri25a.html">[Paper]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2024 -->
+        <h3>2024</h3>
+
+        <div class="pub-item">
+            <img src="papers/caspr.png" alt="CASPR" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://openreview.net/forum?id=8j9hz8DVi8">Combining Axes Preconditioners through Kronecker Approximation for Deep Learning</a>
+                </div>
+                <div class="pub-authors">
+                    <strong>Sai Surya Duvvuri</strong>, Fnu Devvrit, Rohan Anil, Cho-Jui Hsieh, Inderjit S. Dhillon
+                </div>
+                <div class="pub-venue"><strong>ICLR 2024</strong></div>
+                <div class="pub-links">
+                    <a href="https://openreview.net/forum?id=8j9hz8DVi8">[OpenReview]</a>
+                    <a href="https://openreview.net/pdf?id=8j9hz8DVi8">[PDF]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2023 -->
+        <h3>2023</h3>
+
+        <div class="pub-item">
+            <img src="papers/sonew.png" alt="SONew" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/2311.10085">A Computationally Efficient Sparsified Online Newton Method</a>
+                </div>
+                <div class="pub-authors">
+                    Fnu Devvrit*, <strong>Sai Surya Duvvuri</strong>*, Rohan Anil, Vineet Gupta, Cho-Jui Hsieh, Inderjit S. Dhillon
+                </div>
+                <div class="pub-venue"><strong>NeurIPS 2023</strong></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/2311.10085">[arXiv]</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pub-item">
+            <img src="papers/block-lr.png" alt="Block LR" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://openreview.net/forum?id=JzQlGqBm8d">Block Low-Rank Preconditioner with Shared Basis for Stochastic Optimization</a>
+                </div>
+                <div class="pub-authors">
+                    Jui-Nan Yen, <strong>Sai Surya Duvvuri</strong>, Inderjit S. Dhillon, Cho-Jui Hsieh
+                </div>
+                <div class="pub-venue"><strong>NeurIPS 2023</strong></div>
+                <div class="pub-links">
+                    <a href="https://openreview.net/forum?id=JzQlGqBm8d">[OpenReview]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2020 -->
+        <h3>2020</h3>
+
+        <div class="pub-item">
+            <img src="papers/ibox.png" alt="iBox" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://dl.acm.org/doi/10.1145/3422604.3425935">iBox: Internet in a Box</a>
+                </div>
+                <div class="pub-authors">
+                    Sachin Ashok, <strong>Sai Surya Duvvuri</strong>, Nagarajan Natarajan, Venkata N. Padmanabhan, Sundararajan Sellamanickam, Johannes Gehrke
+                </div>
+                <div class="pub-venue"><strong>ACM HotNets 2020</strong></div>
+                <div class="pub-links">
+                    <a href="https://dl.acm.org/doi/10.1145/3422604.3425935">[Paper]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2019 -->
+        <h3>2019</h3>
+
+        <div class="pub-item">
+            <img src="papers/text-simpl.png" alt="Text Simplification" class="pub-thumb">
+            <div class="pub-text">
+                <div class="pub-title">
+                    <a href="https://arxiv.org/abs/1810.07931">Unsupervised Neural Text Simplification</a>
+                </div>
+                <div class="pub-authors">
+                    <strong>Sai Surya</strong>, Abhijit Mishra, Anirban Laha, Parag Jain, Karthik Sankaranarayanan
+                </div>
+                <div class="pub-venue"><strong>ACL 2019</strong></div>
+                <div class="pub-links">
+                    <a href="https://arxiv.org/abs/1810.07931">[arXiv]</a>
+                    <a href="https://aclanthology.org/P19-1198/">[ACL Anthology]</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Last updated: February 2026</p>
+    </footer>
+
+</div>
+
+
+</body>
+</html>
