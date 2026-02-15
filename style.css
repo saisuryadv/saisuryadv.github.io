@@ -108,6 +108,13 @@ a:hover {
     margin-bottom: 14px;
 }
 
+.email {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 10px;
+    font-family: monospace;
+}
+
 /* Social icon links */
 .social-links {
     display: flex;
