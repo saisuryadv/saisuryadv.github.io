@@ -240,7 +240,7 @@ h3 {
 
 /* Scrollable news container */
 .news-scroll {
-    max-height: 350px;
+    max-height: 250px;
     overflow-y: scroll;
     padding-right: 8px;
     -webkit-overflow-scrolling: touch;
