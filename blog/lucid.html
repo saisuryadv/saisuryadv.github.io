@@ -89,7 +89,7 @@
                 <strong>High entropy</strong> (flat, uniform distributions) keeps gradients healthy — but causes <strong>representation collapse</strong> [9]. All queries retrieve nearly the same weighted average, destroying the model's ability to distinguish between tokens.
             </p>
             <p>
-                This narrow operating zone shrinks as context length grows. LUCID's key insight is that we shouldn't be fighting entropy at all; the root problem lies elsewhere.
+                As context grows, attention tends to drift into the high-entropy zone — a phenomenon observed in prior work like Differential Transformer [6]. LUCID's key insight is that we shouldn't be fighting entropy at all; the root problem lies elsewhere.
             </p>
             <div class="blog-takeaway">
                 <strong>Softmax attention dilutes as context grows.</strong> Lowering entropy sharpens focus but kills gradients; raising it preserves gradients but collapses representations. Neither direction scales.
