@@ -76,17 +76,20 @@
 
             <h3>The Entropy Paradox</h3>
             <p>
-                The most natural fix is to adjust the softmax temperature. Standard attention uses temperature $\tau = \sqrt{d}$:
+                Standard attention computes:
             </p>
-            $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\tau}\right) V$$
+            $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d}}\right) V$$
             <p>
-                <strong>Lower temperature</strong> ($\tau \downarrow$) sharpens the distribution — but creates <strong>vanishing gradients</strong>. As $\tau \to 0$, the softmax output approaches a one-hot vector, and its gradient approaches zero everywhere. The model can no longer learn [8, 9].
-            </p>
-            <p>
-                <strong>Higher temperature</strong> ($\tau \uparrow$) keeps gradients healthy — but causes <strong>representation collapse</strong> [9]. The softmax output approaches a uniform distribution, and all queries retrieve the same weighted average, destroying the model's ability to distinguish between tokens.
+                The entropy of the attention distribution $a = \text{softmax}(q^\top [k_1, \ldots, k_N] / \sqrt{d})$ is determined by how the learned $Q$ and $K$ projections shape the logits. This entropy must land in a narrow operating zone:
             </p>
             <p>
-                This leaves a <strong>narrow operating zone</strong> where attention entropy must land — and this zone shrinks as context length grows. LUCID's key insight is that we shouldn't be fighting entropy at all; the root problem lies elsewhere.
+                <strong>Low entropy</strong> (sharp, peaked distributions) enables precise retrieval — but creates <strong>vanishing gradients</strong>. As the distribution approaches one-hot, the softmax Jacobian approaches zero everywhere. The model can no longer learn [8, 9].
+            </p>
+            <p>
+                <strong>High entropy</strong> (flat, uniform distributions) keeps gradients healthy — but causes <strong>representation collapse</strong> [9]. All queries retrieve nearly the same weighted average, destroying the model's ability to distinguish between tokens.
+            </p>
+            <p>
+                This narrow operating zone shrinks as context length grows. LUCID's key insight is that we shouldn't be fighting entropy at all; the root problem lies elsewhere.
             </p>
             <div class="blog-takeaway">
                 <strong>Softmax attention dilutes as context grows.</strong> Lowering entropy sharpens focus but kills gradients; raising it preserves gradients but collapses representations. Neither direction scales.
