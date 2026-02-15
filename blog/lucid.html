@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUCID: Attention with Preconditioned Representations — Sai Surya Duvvuri</title>
+    <meta name="description" content="A deep-dive into LUCID attention — how preconditioning the key correlation matrix fixes attention noise in long-context LLMs.">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="topnav">
+    <a href="../index.html">Home</a>
+    <a href="../index.html#news">News</a>
+    <a href="../index.html#publications">Publications</a>
+    <a href="../CV_sai.pdf">CV</a>
+</nav>
+
+<div class="container">
+
+    <article class="blog-article">
+
+        <!-- Title + Metadata -->
+        <header class="blog-header">
+            <h1 class="blog-title">LUCID: Attention with Preconditioned Representations</h1>
+            <div class="blog-meta">
+                <span class="blog-date">February 2026</span>
+                <span class="blog-authors">Sai Surya Duvvuri*, Nirmal Patel*, Nilesh Gupta, Inderjit S. Dhillon</span>
+                <span class="blog-links">
+                    <a href="https://arxiv.org/abs/2602.10410">[arXiv]</a>
+                    <a href="https://www.github.com/saisuryadv/LUCID" style="display:inline-flex;align-items:center;gap:4px;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                        [GitHub]
+                    </a>
+                </span>
+            </div>
+        </header>
+
+        <figure class="blog-figure" style="margin-top:8px;">
+            <img src="figures/LUCID-overview.png" alt="LUCID overview: the preconditioner decorrelates keys in RKHS, sharpening attention on relevant tokens. The preconditioner inverse is computed via torch.linalg.solve_triangular (cuBLAS TRSM kernel).">
+            <figcaption><strong>Top:</strong> Softmax attention entropy must lie in a narrow operating zone — high entropy causes representation collapse, low entropy causes vanishing gradients. Even within this zone, correlated keys create attention noise. The condition number $\kappa$ grows with sequence length. <strong>Bottom:</strong> LUCID constructs a preconditioner $P = (M \circ \exp(KK^\top))^{-1}$ that decorrelates keys in RKHS, computed efficiently via <code>torch.linalg.solve_triangular</code> (cuBLAS TRSM).</figcaption>
+        </figure>
+
+        <!-- TL;DR -->
+        <section class="blog-section">
+            <h2>TL;DR</h2>
+            <p>
+                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Temperature tuning can't fix this — it trades vanishing gradients for representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval and <strong>~1.3%</strong> inference overhead.
+            </p>
+        </section>
+
+        <!-- The Problem -->
+        <section class="blog-section">
+            <h2>The Problem: Attention Noise at Long Contexts</h2>
+            <p>
+                Softmax attention computes a probability distribution over all keys for each query. As the sequence length $n$ grows, this distribution must cover more and more tokens. Even if most tokens are irrelevant, softmax still assigns them non-zero probability — it <em>cannot</em> output exact zeros.
+            </p>
+            <p>
+                This is the <strong>attention dilution</strong> problem: the probability mass that should concentrate on a handful of relevant tokens gets spread thin across thousands of irrelevant ones. For tasks like needle-in-a-haystack retrieval at 128K context, this dilution directly degrades performance.
+            </p>
+
+            <h3>The Temperature Paradox</h3>
+            <p>
+                The most natural fix is to adjust the softmax temperature. Standard attention uses temperature $\tau = \sqrt{d}$:
+            </p>
+            $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\tau}\right) V$$
+            <p>
+                <strong>Lower temperature</strong> ($\tau \downarrow$) sharpens the distribution — but creates <strong>vanishing gradients</strong>. As $\tau \to 0$, the softmax output approaches a one-hot vector, and its gradient approaches zero everywhere. The model can no longer learn [8, 9].
+            </p>
+            <p>
+                <strong>Higher temperature</strong> ($\tau \uparrow$) keeps gradients healthy — but causes <strong>representation collapse</strong> [9]. The softmax output approaches a uniform distribution, and all queries retrieve the same weighted average, destroying the model's ability to distinguish between tokens.
+            </p>
+            <p>
+                This leaves a <strong>narrow operating zone</strong> where temperature must be carefully balanced — and this zone shrinks as context length grows. LUCID's key insight is that we shouldn't be tuning temperature at all; the root problem lies elsewhere.
+            </p>
+            <div class="blog-takeaway">
+                <strong>Softmax attention dilutes as context grows.</strong> Lowering temperature sharpens focus but kills gradients; raising it preserves gradients but collapses representations. Neither direction scales.
+            </div>
+        </section>
+
+        <!-- Root Cause -->
+        <section class="blog-section">
+            <h2>Root Cause: Correlated Keys</h2>
+            <p>
+                To understand why attention dilutes, consider what softmax actually computes. The attention weights are determined by the <strong>key correlation matrix</strong> in the Reproducing Kernel Hilbert Space (RKHS) induced by the exponential kernel:
+            </p>
+            $$G_{ij} = \exp\!\left(\frac{k_i^\top k_j}{\sqrt{d}}\right)$$
+            <p>
+                A critical property: since this is an exponentiated inner product, $G_{ij} > 0$ for all $i, j$. Every pair of keys is always positively correlated in this RKHS. There are no negative or zero entries — keys <em>cannot</em> be orthogonal in the RKHS feature space.
+            </p>
+            <p>
+                The <strong>condition number</strong> $\kappa(G)$ of this matrix measures how correlated the keys are. When $\kappa$ is large, many keys point in similar directions in the RKHS, making it hard for softmax to distinguish between them. As sequence length increases, the condition number grows because more keys packed into a finite-dimensional space inevitably become more correlated. This is the fundamental cause of attention dilution.
+            </p>
+
+            <figure class="blog-figure">
+                <img src="figures/condition_number_plot.png" alt="Condition number of the LUCID preconditioner matrix grows with sequence length, showing power-law growth from 2K to 65K tokens." style="max-width:60%;">
+                <figcaption>Condition number $\kappa$ of the preconditioner matrix grows with sequence length. Higher $\kappa$ indicates stronger key correlations, where LUCID's correction becomes more essential. Measured on ~1B parameter models (hidden size 2048, 24 layers, 32 heads) during continual pretraining on Dolma [17], finetuned from 2K to 65K.</figcaption>
+            </figure>
+
+            <p>
+                The condition number grows with sequence length due to accumulating key correlations. This empirically validates that <strong>LUCID's advantage increases for longer sequences</strong> where key correlations are worst.
+            </p>
+            <div class="blog-takeaway">
+                <strong>The root cause is geometry, not temperature.</strong> In the exponential kernel RKHS, keys are always positively correlated ($G_{ij} > 0$). As sequence length grows, $\kappa(G)$ increases and attention noise worsens — this is what LUCID directly fixes.
+            </div>
+        </section>
+
+        <!-- The LUCID Method -->
+        <section class="blog-section">
+            <h2>The LUCID Method</h2>
+
+            <h3>Softmax Attention as Gradient Descent in RKHS</h3>
+            <p>
+                Following Katharopoulos et al. [2] ("Transformers are RNNs"), the exponential inner product in softmax attention can be expressed using a kernel function:
+            </p>
+            $$\exp\!\left(\langle q_i, k_j \rangle\right) = \langle \phi(q_i), \phi(k_j) \rangle$$
+            <p>
+                where $\phi: \mathbb{R}^d \to \mathcal{H}$ is a feature map to a Reproducing Kernel Hilbert Space (RKHS). Using this view, we can interpret unnormalized softmax attention as gradient descent on a <strong>linear objective</strong>. At each step $t$, we maintain a state matrix $S: \mathcal{H} \to \mathbb{R}^d$ that stores key-value associations:
+            </p>
+            $$f_t(S) = -v_t^\top S\,\phi(k_t)$$
+            <p>
+                The gradient $\nabla_S f_t(S) = -v_t\,\phi(k_t)^\top$ yields the additive update:
+            </p>
+            $$S_t = S_{t-1} + v_t\,\phi(k_t)^\top$$
+            <p>
+                This is precisely the update underlying standard linear attention. But the linear objective has fundamental limitations: it is <strong>unbounded from below</strong>, the updates are <strong>state-independent</strong> (occurring regardless of whether the association is already stored), and each update accumulates <strong>interference</strong> without removing old information.
+            </p>
+
+            <h3>Quadratic Objective &rarr; Delta Rule in RKHS</h3>
+            <p>
+                Following Yang et al. [3] (DeltaNet, arXiv:2406.06484), a more principled approach uses a <strong>quadratic objective</strong> that directly measures retrieval error:
+            </p>
+            $$f_t(S) = \frac{1}{2}\|S\,\phi(k_t) - v_t\|^2$$
+            <p>
+                This objective is bounded below by 0, with a clear minimum at $S\,\phi(k_t) = v_t$. The gradient descent update with step size $\beta_t = 1$ yields the <strong>delta rule in RKHS</strong>:
+            </p>
+            $$S_t = S_{t-1}(I - \phi(k_t)\,\phi(k_t)^\top) + v_t\,\phi(k_t)^\top$$
+            <p>
+                This is an <strong>erase-then-write</strong> mechanism:
+            </p>
+            $$S_t = S_{t-1} - \underbrace{(S_{t-1}\phi(k_t))\,\phi(k_t)^\top}_{\text{erase old association}} + \underbrace{v_t\,\phi(k_t)^\top}_{\text{write new association}}$$
+            <p>
+                A key advantage is <strong>self-regulation</strong>: when the current prediction is already correct ($S_{t-1}\phi(k_t) = v_t$), the gradient is zero and no update occurs. This property is absent in the linear objective, which blindly updates regardless.
+            </p>
+
+            <h3>Why RKHS, Not Key Space? (LUCID vs DeltaNet)</h3>
+            <p>
+                The delta rule update above is precisely DeltaNet [3, 4], but generalized from finite-dimensional key space to the infinite-dimensional RKHS induced by the exponential kernel. The key differences:
+            </p>
+            <ul>
+                <li><strong>DeltaNet</strong>: Uses the identity map $\phi(x) = x$, operating in the $d$-dimensional token space. The preconditioner $(I + \text{stril}(KK^\top))^{-1}$ decorrelates keys in this finite-dimensional space. When keys are orthogonal ($k_i^\top k_j = 0$), DeltaNet's correction vanishes.</li>
+                <li><strong>LUCID</strong>: Uses the exponential kernel feature map $\phi: \mathbb{R}^d \to \mathcal{H}$, operating in an infinite-dimensional RKHS. The preconditioner $(M \circ \exp(KK^\top))^{-1}$ decorrelates keys in this richer space. Since $\exp(k_i^\top k_j) > 0$ always, LUCID's correction <strong>never vanishes</strong>.</li>
+            </ul>
+            <p>
+                This distinction matters at long contexts. Keys live in a finite head dimension (e.g., $d = 128$), so at sequence lengths like 128K, the $d$-dimensional key space is far too small to accommodate 128K nearly-orthogonal vectors — keys inevitably interfere, and DeltaNet's correction in this crowded space is limited. The RKHS induced by the exponential kernel, however, is infinite-dimensional. The feature-space representations $\phi(k)$ have the potential to be far less correlated in this richer space, and LUCID's preconditioner exploits this by decorrelating them, enabling precise retrieval even when the original keys are highly entangled.
+            </p>
+
+            <h3>The Key Equation</h3>
+            <p>
+                The recurrent delta rule can be computed in parallel. Collecting outputs for all tokens and introducing standard $1/\sqrt{d}$ logit scaling plus RMS normalization for the keys inside the preconditioner ($k_{i,\text{RN}} \leftarrow \sqrt{d} \cdot k_i / \|k_i\|_2$), we arrive at the LUCID attention formula:
+            </p>
+            $$\text{LUCID}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d}} + \hat{M}\right) \cdot \left(M \circ \exp\!\left(\frac{K_{\text{RN}}K_{\text{RN}}^\top}{\sqrt{d}} - \sqrt{d}\right)\right)^{\!-1} V$$
+            <p>
+                where $K_{\text{RN}}$ denotes the RMS-normalized keys, $M$ is the binary causal mask ($M_{ij} = 1$ if $i \ge j$), and $\hat{M}$ is its additive form ($\hat{M}_{ij} = 0$ if $i \ge j$, $-\infty$ otherwise). The middle term is the <strong>preconditioner</strong> — it inverts the key correlation structure, decorrelating the keys before the attention output is computed. The RMS normalization ensures unit diagonal entries and controlled off-diagonal magnitudes, yielding better condition numbers.
+            </p>
+
+            <h3>Practical Implementation</h3>
+            <p>
+                The matrix inverse might look expensive, but the preconditioner is <strong>lower triangular</strong> thanks to the causal mask $M$. This means we solve $PY = V$ via <strong>forward substitution</strong>, not a full matrix inverse. In practice, we use <strong><code>torch.linalg.solve_triangular</code></strong>, which dispatches to the cuBLAS TRSM (Triangular Solve) kernel — a highly optimized divide-and-conquer routine on GPU.
+            </p>
+            <p>
+                Crucially, the preconditioner is computed <strong>per KV head</strong>, not per query head. Modern LLMs use <strong>Grouped-Query Attention (GQA)</strong> with far fewer KV heads than query heads (e.g., 4 KV heads for 32 query heads in our 1B model). This means the triangular solve is only performed 4 times, not 32, keeping overhead minimal:
+            </p>
+            <ul>
+                <li><strong>Training overhead:</strong> ~0–5.5% depending on architecture (0% for Gemma 3-1B, 3.5% for Gemma 3-4B, 5.5% for Qwen 2.5-1.5B)</li>
+                <li><strong>Inference overhead:</strong> ~1.3% (77ms vs 76ms at 32K context with 100 new tokens)</li>
+            </ul>
+            <p>
+                A compute ablation confirms these gains are architectural, not from extra compute: training the baseline 10% longer does not match LUCID's multi-needle retrieval performance.
+            </p>
+            <div class="blog-takeaway">
+                <strong>LUCID = DeltaNet in RKHS.</strong> It arises from optimizing a quadratic retrieval-error objective instead of the linear objective underlying standard attention. The resulting delta rule operates in the infinite-dimensional RKHS where 128-dim keys can't hide correlations, and the preconditioner is computed efficiently via forward substitution (cuBLAS TRSM) with 0–5.5% training overhead.
+            </div>
+        </section>
+
+        <!-- Learnability -->
+        <section class="blog-section">
+            <h2>Learnability</h2>
+
+            <h3>The Softmax Gradient Problem</h3>
+            <p>
+                A critical requirement for attention mechanisms is the ability to represent sharp distributions — when a query $q_i$ matches a specific key $k_j$, attention should concentrate on the corresponding value $v_j$. In standard softmax, the way to achieve this is to lower the temperature, pushing the output toward a one-hot vector:
+            </p>
+            $$\text{softmax}(z / \tau) \xrightarrow{\tau \to 0} e_{\arg\max z}$$
+            <p>
+                But this kills learning. The softmax Jacobian is:
+            </p>
+            $$J = \frac{\partial a}{\partial \tilde{a}} = \text{diag}(a) - aa^\top$$
+            <p>
+                When $a = e_i$ (one-hot), we get $J = \text{diag}(e_i) - e_i e_i^\top = 0$. Zero Jacobian means zero gradients — learning stops completely. This creates a fundamental dilemma: standard attention can either retrieve precisely (low temperature, no gradients) or learn effectively (higher temperature, blurred retrieval).
+            </p>
+
+            <h3>LUCID Decouples Retrieval from Temperature</h3>
+            <p>
+                LUCID resolves this tension by achieving sharp retrieval through the preconditioner $(M \circ \exp(KK^\top))^{-1}$ rather than by lowering the softmax temperature. The softmax operates at standard temperature with a well-conditioned gradient, while the preconditioner sharpens the final output through deconvolution. This fundamental <strong>decoupling</strong> enables LUCID to achieve both precise retrieval and effective learning simultaneously.
+            </p>
+            <p>
+                <strong>Theorem</strong> (Gradient Preservation). Let $o$ be the LUCID attention output (before multiplying by $V$). Assume $K \neq 0$ and at least one column of $\text{diag}(a) - aa^\top$ is not in the null-space of $K^\top$, where $a = \text{softmax}(qK^\top / \sqrt{d})$. Then $\partial o / \partial q \neq 0$.
+            </p>
+            <p>
+                The proof follows from the Jacobian decomposition:
+            </p>
+            $$\frac{\partial o}{\partial q} = \frac{K^\top}{\sqrt{d}} \left(\text{diag}(a) - aa^\top\right) \left(M \circ \exp\!\left(\frac{K_{\text{RN}}K_{\text{RN}}^\top}{\sqrt{d}} - \sqrt{d}\right)\right)^{\!-1}$$
+            <p>
+                Since the preconditioner is a lower-triangular matrix with positive diagonal entries, it is invertible with <strong>trivial null-space</strong>. The gradient can only vanish if the softmax becomes one-hot — but LUCID doesn't need low temperature, so this doesn't happen.
+            </p>
+
+            <h3>Synthetic Experiment: Sequential Task Learning</h3>
+            <p>
+                To empirically validate this, we designed a two-phase experiment on a single-layer transformer (dim 256, 1 head, sequences of length 10):
+            </p>
+            <ul>
+                <li><strong>Phase 1 (Self-Retrieval):</strong> Learn to copy the input ($y_i = x_i$). Requires sharp, identity-like attention.</li>
+                <li><strong>Phase 2 (Cumulative Averaging):</strong> Without resetting weights, switch to computing $y_i = \frac{1}{i}\sum_{j=1}^{i} x_j$. Requires adapting from sparse to dense distributions.</li>
+            </ul>
+
+            <figure class="blog-figure">
+                <img src="figures/p1p2_horizontal.png" alt="Sequential task learning experiment. Left: training loss; both methods solve Phase 1, but only LUCID adapts to Phase 2. Right: off-diagonal Jacobian magnitude; softmax reduces it by ~1000x during Phase 1, blocking gradient flow in Phase 2.">
+                <figcaption><strong>Left:</strong> Training loss across two phases. Both methods solve Phase 1 (self-retrieval), but only LUCID adapts to Phase 2 (cumulative averaging). <strong>Right:</strong> Off-diagonal Jacobian magnitude (log scale). Standard softmax reduces its Jacobian by ~$10^3\times$ during Phase 1 to achieve sharpness, blocking gradient flow in Phase 2. LUCID maintains higher Jacobian values throughout, enabling rapid adaptation.</figcaption>
+            </figure>
+
+            <p>
+                During Phase 1, both methods achieve near-zero loss. But standard softmax achieves sharpness by progressively reducing its Jacobian $(\text{diag}(a) - aa^\top)$ by approximately three orders of magnitude — effectively lowering its implicit temperature. When Phase 2 arrives, this near-zero Jacobian blocks gradient flow and the model cannot adapt. LUCID, having achieved sharpness through its preconditioner while maintaining higher Jacobian magnitudes, rapidly adapts to the new task.
+            </p>
+            <div class="blog-takeaway">
+                <strong>LUCID decouples retrieval sharpness from softmax temperature.</strong> The preconditioner provides precision while the softmax operates at standard temperature, preserving gradient flow. Standard attention must choose between sharp retrieval and effective learning — LUCID gets both.
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="blog-section">
+            <h2>Results</h2>
+            <p>
+                LUCID is evaluated on ~1B parameter language models (22 layers, model dim 2048, 32 query heads, 4 KV heads) with context windows up to 128K tokens. It is a <strong>drop-in replacement</strong> for standard attention — no architectural changes, no additional parameters.
+            </p>
+
+            <h3>Multi-Needle Retrieval (RULER)</h3>
+            <p>
+                On the RULER [10] multi-needle retrieval benchmark:
+            </p>
+
+            <figure class="blog-figure">
+                <img src="figures/heatmap_sidebyside.png" alt="MNIAH heatmaps: Standard Attention degrades sharply with more needles and longer sequences; LUCID maintains substantially higher accuracy across all settings; the difference map shows 10-26% improvements.">
+                <figcaption><strong>Left:</strong> Standard Attention accuracy degrades sharply as task difficulty increases (more needles, longer sequences), dropping to 11.4% in the hardest configuration. <strong>Middle:</strong> LUCID Attention maintains substantially higher accuracy. <strong>Right:</strong> Consistent improvements of 10–26%, with LUCID providing the largest gains at longer sequence lengths.</figcaption>
+            </figure>
+
+            <figure class="blog-figure">
+                <img src="figures/finetuning_perf.png" alt="Multi-needle retrieval accuracy improves with longer finetuning for LUCID: the gap grows from +19.8% at 32K finetuning to +47.3% at 64K finetuning." style="max-width:60%;">
+                <figcaption>Multi-needle retrieval accuracy vs. finetuning sequence length. The performance gap between LUCID and Standard Attention increases from +19.8% (32K finetuning) to <strong>+47.3%</strong> (64K finetuning). LUCID's gains scale with context length — exactly where standard attention struggles most.</figcaption>
+            </figure>
+
+            <h3>BABILong</h3>
+            <p>
+                BABILong [13] tests multi-hop fact retrieval and reasoning across long contexts (32K–128K tokens). We introduce <strong>LUCID-PaTH</strong>, which combines LUCID's key decorrelation with PaTH positional encoding [7] for length extrapolation.
+            </p>
+
+            <figure class="blog-figure">
+                <img src="figures/babilong_shaded_log_largefont.png" alt="BABILong results: LUCID-PaTH maintains stable accuracy (0.21-0.25) across 32K-128K context while baselines collapse." style="max-width:60%;">
+                <figcaption>BABILong long-context retrieval performance. Standard and Diff attention degrade rapidly, dropping from ~0.14 at 32K to near zero at 128K. <strong>LUCID-PaTH maintains stable accuracy between 0.21–0.25 across all context lengths</strong>, with minimal degradation as sequence length increases.</figcaption>
+            </figure>
+
+            <h3>LongBench &amp; SCROLLS</h3>
+            <p>
+                On the LongBench [11] and SCROLLS [16] real-world long-document benchmarks (multi-document QA, single-document QA, summarization), LUCID and LUCID-PaTH achieve the best performance on 4 of 6 tasks. Linear attention variants (DeltaNet, GLA, GSA) underperform substantially — e.g., DeltaNet achieves only 0.036 F1 on 2WikiMQA compared to 0.274 for LUCID.
+            </p>
+
+            <h3>Attention Hitrate</h3>
+            <p>
+                To directly measure whether LUCID reduces attention noise, we measure the <em>attention hitrate</em> — the fraction of attention weight placed on semantically relevant ("needle") tokens during retrieval:
+            </p>
+            <ul>
+                <li>Standard Attention: 0.1817</li>
+                <li>LUCID Attention: 0.2845 — a <strong>56.6% improvement</strong></li>
+            </ul>
+            <p>
+                This directly confirms that LUCID's preconditioner concentrates probability mass on the right tokens.
+            </p>
+            <div class="blog-takeaway">
+                <strong>LUCID is a drop-in replacement with gains that scale with context length.</strong> Up to 47.3% on multi-needle retrieval, stable accuracy on BABILong at 128K where baselines collapse, and 56.6% better attention hitrate — all with ~1.3% inference overhead.
+            </div>
+        </section>
+
+        <!-- Want to Work Further -->
+        <section class="blog-section">
+            <h2>Want to Work Further on LUCID?</h2>
+
+            <h3>(a) Distillation for Foundation Models</h3>
+            <p>
+                Our experiments train from scratch at ~1B scale. A natural next step is to use <strong>distillation</strong> to create LUCID+PaTH variants of existing foundation models (Qwen, Gemma, Llama, etc.) for ~1M context, where $\kappa$ blows up and LUCID's correction becomes most essential. This would bring LUCID's benefits to production-scale models without full pretraining.
+            </p>
+
+            <h3>(b) Efficient Kernels</h3>
+            <p>
+                The current implementation uses the cuBLAS TRSM kernel for the triangular solve. Two promising directions for further optimization:
+            </p>
+            <ul>
+                <li><strong>Interleaved solver + FlashAttention:</strong> Fuse the triangular solve with the FlashAttention softmax pass into a single kernel to reduce memory traffic.</li>
+                <li><strong>Neumann series approximation:</strong> Write the inverse as $(I - A)^{-1} = I + A + A^2 + \ldots$ and compute the truncated series using FlashAttention-like tiled algorithms. This could enable fully IO-aware implementations.</li>
+            </ul>
+
+            <h3>(c) Bidirectional Models</h3>
+            <p>
+                LUCID's efficient implementation relies on the preconditioner being lower triangular (from the causal mask). For bidirectional settings — such as diffusion models or encoders — the preconditioner loses this structure. One approach: use <strong>Newton-Schulz iteration</strong> (as in the Muon optimizer) to approximate the inverse, which primarily involves bf16 matrix multiplications and could be made efficient on modern hardware.
+            </p>
+            <div class="blog-takeaway">
+                <strong>Key open directions:</strong> distilling LUCID into foundation models for ~1M context, fusing the triangular solver with FlashAttention kernels, and Newton-Schulz iteration for bidirectional settings.
+            </div>
+        </section>
+
+        <!-- References -->
+        <section class="blog-section">
+            <h2>References</h2>
+            <ol class="blog-references">
+                <li>Vaswani et al. "Attention Is All You Need." NeurIPS 2017. <a href="https://arxiv.org/abs/1706.03762">arXiv:1706.03762</a></li>
+                <li>Katharopoulos et al. "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention." ICML 2020. <a href="https://arxiv.org/abs/2006.16236">arXiv:2006.16236</a></li>
+                <li>Yang et al. "Parallelizing Linear Transformers with the Delta Rule over Sequence Length." 2024. <a href="https://arxiv.org/abs/2406.06484">arXiv:2406.06484</a></li>
+                <li>Schlag et al. "Linear Transformers Are Secretly Fast Weight Programmers." ICML 2021. <a href="https://arxiv.org/abs/2102.11174">arXiv:2102.11174</a></li>
+                <li>Yang et al. "Gated Delta Networks: Improving Mamba2 with Delta Rule." 2024. <a href="https://arxiv.org/abs/2412.06464">arXiv:2412.06464</a></li>
+                <li>Ye et al. "Differential Transformer." 2025. <a href="https://arxiv.org/abs/2410.05258">arXiv:2410.05258</a></li>
+                <li>Yang et al. "PaTH Attention: Position Encoding via Accumulating Householder Transformations." 2025. <a href="https://arxiv.org/abs/2505.16381">arXiv:2505.16381</a></li>
+                <li>Zhai et al. "Stabilizing Transformer Training by Preventing Attention Entropy Collapse." ICML 2023. <a href="https://arxiv.org/abs/2303.06296">arXiv:2303.06296</a></li>
+                <li>Masarczyk et al. "Unpacking Softmax: How Temperature Drives Representation Collapse, Compression, and Generalization." 2025. <a href="https://arxiv.org/abs/2506.01562">arXiv:2506.01562</a></li>
+                <li>Hsieh et al. "RULER: What's the Real Context Size of Your Long-Context Language Models?" 2024. <a href="https://arxiv.org/abs/2404.06654">arXiv:2404.06654</a></li>
+                <li>Bai et al. "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding." 2023. <a href="https://arxiv.org/abs/2308.14508">arXiv:2308.14508</a></li>
+                <li>Brown et al. "Language Models are Few-Shot Learners." NeurIPS 2020.</li>
+                <li>Kuratov et al. "BABILong: Testing the Limits of LLMs with Long Context Reasoning-in-a-Haystack." NeurIPS 2024. <a href="https://arxiv.org/abs/2406.10149">arXiv:2406.10149</a></li>
+                <li>Dao &amp; Gu. "Transformers are SSMs: Generalized Models and Efficient Algorithms through Structured State Space Duality." 2024. <a href="https://arxiv.org/abs/2405.21060">arXiv:2405.21060</a></li>
+                <li>Weston et al. "Towards AI-Complete Question Answering: A Set of Prerequisite Toy Tasks." 2015. <a href="https://arxiv.org/abs/1502.05698">arXiv:1502.05698</a></li>
+                <li>Shaham et al. "SCROLLS: Standardized CompaRison Over Long Language Sequences." 2022. <a href="https://arxiv.org/abs/2201.03533">arXiv:2201.03533</a></li>
+                <li>Soldaini et al. "Dolma: An Open Corpus of Three Trillion Tokens for Language Model Pretraining Research." 2024.</li>
+                <li>Team et al. "Gemma 3 Technical Report." 2025. <a href="https://arxiv.org/abs/2503.19786">arXiv:2503.19786</a></li>
+                <li>Team et al. "Qwen2 Technical Report." 2024. <a href="https://arxiv.org/abs/2407.10671">arXiv:2407.10671</a></li>
+                <li>Su et al. "RoFormer: Enhanced Transformer with Rotary Position Embedding." Neurocomputing 2024.</li>
+                <li>Gao et al. "The Language Model Evaluation Harness." 2024. <a href="https://zenodo.org/records/12608602">Zenodo</a></li>
+                <li>Zhang et al. "Gated Slot Attention for Efficient Linear-Time Sequence Modeling." 2024. <a href="https://arxiv.org/abs/2409.07146">arXiv:2409.07146</a></li>
+            </ol>
+        </section>
+
+        <!-- Back link -->
+        <div class="blog-back">
+            <a href="../index.html">&larr; Back to home</a>
+        </div>
+
+    </article>
+
+    <!-- Footer -->
+    <footer>
+        <p>Last updated: February 2026</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
