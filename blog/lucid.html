@@ -60,7 +60,7 @@
         <section class="blog-section">
             <h2>TL;DR</h2>
             <p>
-                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Tuning the attention entropy can't fix this — lower entropy causes vanishing gradients, higher entropy causes representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval, <strong>18%</strong> improvement on BABILong long-context reasoning, and <strong>~1.3%</strong> inference overhead.
+                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Tuning the attention entropy can't fix this — lower entropy causes vanishing gradients, higher entropy causes representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the entropy: a drop-in replacement with up to <strong>14%</strong> improvement on RULER multi-needle retrieval, <strong>18%</strong> improvement on BABILong long-context reasoning, and <strong>~1.3%</strong> inference overhead.
             </p>
         </section>
 
@@ -280,8 +280,8 @@
             </figure>
 
             <figure class="blog-figure">
-                <img src="figures/finetuning_perf.png" alt="Multi-needle retrieval accuracy improves with longer finetuning for LUCID: the gap grows from +19.8% at 32K finetuning to +47.3% at 64K finetuning." style="max-width:60%;">
-                <figcaption>Multi-needle retrieval accuracy vs. finetuning sequence length. The performance gap between LUCID and Standard Attention increases from +19.8% (32K finetuning) to <strong>+47.3%</strong> (64K finetuning). LUCID's gains scale with context length — exactly where standard attention struggles most.</figcaption>
+                <img src="figures/finetuning_perf.png" alt="Multi-needle retrieval accuracy improves with longer finetuning for LUCID: relative improvement grows from +19.8% at 32K finetuning to +47.3% at 64K finetuning." style="max-width:60%;">
+                <figcaption>Multi-needle retrieval accuracy vs. finetuning sequence length. The relative improvement of LUCID over Standard Attention increases from +19.8% (32K finetuning) to <strong>+47.3%</strong> (64K finetuning). LUCID's gains scale with context length — exactly where standard attention struggles most.</figcaption>
             </figure>
 
             <h3>BABILong</h3>
@@ -311,7 +311,7 @@
                 This directly confirms that LUCID's preconditioner concentrates probability mass on the right tokens.
             </p>
             <div class="blog-takeaway">
-                <strong>LUCID is a drop-in replacement with gains that scale with context length.</strong> Up to 47.3% on multi-needle retrieval, stable accuracy on BABILong at 128K where baselines collapse, and 56.6% better attention hitrate — all with ~1.3% inference overhead.
+                <strong>LUCID is a drop-in replacement with gains that scale with context length.</strong> Up to 14% improvement on RULER multi-needle (47% relative improvement at 64K finetuning), stable accuracy on BABILong at 128K where baselines collapse, and 56.6% better attention hitrate — all with ~1.3% inference overhead.
             </div>
         </section>
 
