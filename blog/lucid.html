@@ -172,6 +172,9 @@
             <p>
                 This distinction matters at long contexts. Keys live in a finite head dimension (e.g., $d = 128$), so at sequence lengths like 128K, the $d$-dimensional key space is far too small to accommodate 128K nearly-orthogonal vectors — keys inevitably interfere, and DeltaNet's correction in this crowded space is limited. The RKHS induced by the exponential kernel, however, is infinite-dimensional. The feature-space representations $\phi(k)$ have the potential to be far less correlated in this richer space, and LUCID's preconditioner exploits this by decorrelating them, enabling precise retrieval even when the original keys are highly entangled.
             </p>
+            <div class="blog-takeaway">
+                <strong>Why infinite dimensions matter:</strong> You can't fit 128K nearly-orthogonal vectors in a 128-dimensional key space — interference is inevitable. But in the infinite-dimensional RKHS, the feature-space keys $\phi(k)$ have room to be decorrelated by LUCID's preconditioner.
+            </div>
 
             <h3>The Key Equation</h3>
             <p>
