@@ -97,11 +97,11 @@
         <section class="blog-section">
             <h2>Root Cause: Correlated Keys</h2>
             <p>
-                To understand why attention dilutes, consider what softmax actually computes. The attention weights are determined by the <strong>key correlation matrix</strong> in the Reproducing Kernel Hilbert Space (RKHS) induced by the exponential kernel:
+                To understand why attention dilutes, consider what softmax actually computes. The exponential kernel $\exp(\langle \cdot, \cdot \rangle)$ induces a Reproducing Kernel Hilbert Space (RKHS) with feature map $\phi$, where inner products in this space equal exponentiated inner products in the original space. The attention weights are determined by the <strong>key correlation matrix</strong> in this RKHS:
             </p>
-            $$G_{ij} = \exp\!\left(\frac{k_i^\top k_j}{\sqrt{d}}\right)$$
+            $$G_{ij} = \exp\!\left(\frac{k_i^\top k_j}{\sqrt{d}}\right) = \langle \phi(k_i), \phi(k_j) \rangle$$
             <p>
-                A critical property: since this is an exponentiated inner product, $G_{ij} > 0$ for all $i, j$. Every pair of keys is always positively correlated in this RKHS. There are no negative or zero entries — keys <em>cannot</em> be orthogonal in the RKHS feature space.
+                A critical property: since $G_{ij}$ is an exponentiated inner product, $G_{ij} > 0$ for all $i, j$. Every pair of keys is always positively correlated in the RKHS. There are no negative or zero entries — the feature-space keys $\phi(k)$ <em>cannot</em> be orthogonal.
             </p>
             <p>
                 The <strong>condition number</strong> $\kappa(G)$ of this matrix measures how correlated the keys are. When $\kappa$ is large, many keys point in similar directions in the RKHS, making it hard for softmax to distinguish between them. As sequence length increases, the condition number grows because more keys packed into a finite-dimensional space inevitably become more correlated. This is the fundamental cause of attention dilution.
