@@ -50,7 +50,7 @@
             </div>
         </header>
 
-        <figure class="blog-figure" style="margin-top:8px;">
+        <figure class="blog-figure" style="margin-top:8px; max-width:850px; margin-left:auto; margin-right:auto; width:calc(100% + 130px); position:relative; left:-65px;">
             <img src="figures/LUCID-overview.png" alt="LUCID overview: the preconditioner decorrelates keys in RKHS, sharpening attention on relevant tokens. The preconditioner inverse is computed via torch.linalg.solve_triangular (cuBLAS TRSM kernel).">
             <figcaption><strong>Top:</strong> Softmax attention entropy must lie in a narrow operating zone — high entropy causes representation collapse, low entropy causes vanishing gradients. Even within this zone, correlated keys create attention noise. The condition number $\kappa$ grows with sequence length. <strong>Bottom:</strong> LUCID constructs a preconditioner $P = (M \circ \exp(KK^\top))^{-1}$ that decorrelates keys in RKHS, computed efficiently via <code>torch.linalg.solve_triangular</code> (cuBLAS TRSM).</figcaption>
         </figure>
@@ -59,7 +59,7 @@
         <section class="blog-section">
             <h2>TL;DR</h2>
             <p>
-                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Temperature tuning can't fix this — it trades vanishing gradients for representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval and <strong>~1.3%</strong> inference overhead.
+                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Temperature tuning can't fix this — it trades vanishing gradients for representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval, <strong>18%</strong> improvement on BABILong long-context reasoning, and <strong>~1.3%</strong> inference overhead.
             </p>
         </section>
 
@@ -180,10 +180,14 @@
 
             <h3>Practical Implementation</h3>
             <p>
-                The matrix inverse might look expensive, but the preconditioner is <strong>lower triangular</strong> thanks to the causal mask $M$. This means we solve $PY = V$ via <strong>forward substitution</strong>, not a full matrix inverse. In practice, we use <strong><code>torch.linalg.solve_triangular</code></strong>, which dispatches to the cuBLAS TRSM (Triangular Solve) kernel — a highly optimized divide-and-conquer routine on GPU.
+                The intention is to precondition the keys and thereby the attention probabilities formed by query-key correlations. However, we found that multiplying the preconditioner with the values $V$ instead is mathematically equivalent — since matrix multiplication is associative, $(\text{softmax}(\cdots) \cdot P^{-1}) V = \text{softmax}(\cdots) \cdot (P^{-1} V)$. This reformulation has two practical advantages:
             </p>
+            <ul>
+                <li><strong>One preconditioner per KV head:</strong> The preconditioner $P$ depends only on keys, so it is shared across all query heads in the same KV group. Instead of preconditioning every query head's attention weights, we precondition the values once per KV head.</li>
+                <li><strong>Linear solve instead of matrix inverse:</strong> Rather than explicitly computing $P^{-1}$ and multiplying, we solve the linear system $PY = V$. Since $P$ is <strong>lower triangular</strong> (thanks to the causal mask $M$), this is just <strong>forward substitution</strong> — $O(N^2 d)$ complexity, the same as standard attention.</li>
+            </ul>
             <p>
-                Crucially, the preconditioner is computed <strong>per KV head</strong>, not per query head. Modern LLMs use <strong>Grouped-Query Attention (GQA)</strong> with far fewer KV heads than query heads (e.g., 4 KV heads for 32 query heads in our 1B model). This means the triangular solve is only performed 4 times, not 32, keeping overhead minimal:
+                In practice, we use <strong><code>torch.linalg.solve_triangular</code></strong>, which dispatches to the cuBLAS TRSM (Triangular Solve) kernel — a highly optimized divide-and-conquer routine on GPU. Modern LLMs use <strong>Grouped-Query Attention (GQA)</strong> with far fewer KV heads than query heads (e.g., 4 KV heads for 32 query heads in our 1B model), so the triangular solve is only performed 4 times, not 32, keeping overhead minimal:
             </p>
             <ul>
                 <li><strong>Training overhead:</strong> ~0–5.5% depending on architecture (0% for Gemma 3-1B, 3.5% for Gemma 3-4B, 5.5% for Qwen 2.5-1.5B)</li>
