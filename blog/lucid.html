@@ -60,7 +60,7 @@
         <section class="blog-section">
             <h2>TL;DR</h2>
             <p>
-                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Temperature tuning can't fix this — it trades vanishing gradients for representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval, <strong>18%</strong> improvement on BABILong long-context reasoning, and <strong>~1.3%</strong> inference overhead.
+                The <strong>condition number</strong> of the key correlation matrix grows with sequence length, making softmax attention increasingly noisy at long contexts. Tuning the attention entropy can't fix this — lower entropy causes vanishing gradients, higher entropy causes representation collapse. LUCID preconditions the key correlations to decorrelate keys without changing the temperature: a drop-in replacement with up to <strong>47.3%</strong> improvement on multi-needle retrieval, <strong>18%</strong> improvement on BABILong long-context reasoning, and <strong>~1.3%</strong> inference overhead.
             </p>
         </section>
 
@@ -74,7 +74,7 @@
                 This is the <strong>attention dilution</strong> problem: the probability mass that should concentrate on a handful of relevant tokens gets spread thin across thousands of irrelevant ones. For tasks like needle-in-a-haystack retrieval at 128K context, this dilution directly degrades performance.
             </p>
 
-            <h3>The Temperature Paradox</h3>
+            <h3>The Entropy Paradox</h3>
             <p>
                 The most natural fix is to adjust the softmax temperature. Standard attention uses temperature $\tau = \sqrt{d}$:
             </p>
@@ -86,10 +86,10 @@
                 <strong>Higher temperature</strong> ($\tau \uparrow$) keeps gradients healthy — but causes <strong>representation collapse</strong> [9]. The softmax output approaches a uniform distribution, and all queries retrieve the same weighted average, destroying the model's ability to distinguish between tokens.
             </p>
             <p>
-                This leaves a <strong>narrow operating zone</strong> where temperature must be carefully balanced — and this zone shrinks as context length grows. LUCID's key insight is that we shouldn't be tuning temperature at all; the root problem lies elsewhere.
+                This leaves a <strong>narrow operating zone</strong> where attention entropy must land — and this zone shrinks as context length grows. LUCID's key insight is that we shouldn't be fighting entropy at all; the root problem lies elsewhere.
             </p>
             <div class="blog-takeaway">
-                <strong>Softmax attention dilutes as context grows.</strong> Lowering temperature sharpens focus but kills gradients; raising it preserves gradients but collapses representations. Neither direction scales.
+                <strong>Softmax attention dilutes as context grows.</strong> Lowering entropy sharpens focus but kills gradients; raising it preserves gradients but collapses representations. Neither direction scales.
             </div>
         </section>
 
@@ -116,7 +116,7 @@
                 The condition number grows with sequence length due to accumulating key correlations. This empirically validates that <strong>LUCID's advantage increases for longer sequences</strong> where key correlations are worst.
             </p>
             <div class="blog-takeaway">
-                <strong>The root cause is geometry, not temperature.</strong> In the exponential kernel RKHS, keys are always positively correlated ($G_{ij} > 0$). As sequence length grows, $\kappa(G)$ increases and attention noise worsens — this is what LUCID directly fixes.
+                <strong>The root cause is geometry, not entropy.</strong> In the exponential kernel RKHS, keys are always positively correlated ($G_{ij} > 0$). As sequence length grows, $\kappa(G)$ increases and attention noise worsens — this is what LUCID directly fixes.
             </div>
         </section>
 
@@ -219,7 +219,7 @@
                 When $a = e_i$ (one-hot), we get $J = \text{diag}(e_i) - e_i e_i^\top = 0$. Zero Jacobian means zero gradients — learning stops completely. This creates a fundamental dilemma: standard attention can either retrieve precisely (low temperature, no gradients) or learn effectively (higher temperature, blurred retrieval).
             </p>
 
-            <h3>LUCID Decouples Retrieval from Temperature</h3>
+            <h3>LUCID Decouples Retrieval from Entropy</h3>
             <p>
                 LUCID resolves this tension by achieving sharp retrieval through the preconditioner $(M \circ \exp(KK^\top))^{-1}$ rather than by lowering the softmax temperature. The softmax operates at standard temperature with a well-conditioned gradient, while the preconditioner sharpens the final output through deconvolution. This fundamental <strong>decoupling</strong> enables LUCID to achieve both precise retrieval and effective learning simultaneously.
             </p>
@@ -252,7 +252,7 @@
                 During Phase 1, both methods achieve near-zero loss. But standard softmax achieves sharpness by progressively reducing its Jacobian $(\text{diag}(a) - aa^\top)$ by approximately three orders of magnitude — effectively lowering its implicit temperature. When Phase 2 arrives, this near-zero Jacobian blocks gradient flow and the model cannot adapt. LUCID, having achieved sharpness through its preconditioner while maintaining higher Jacobian magnitudes, rapidly adapts to the new task.
             </p>
             <div class="blog-takeaway">
-                <strong>LUCID decouples retrieval sharpness from softmax temperature.</strong> The preconditioner provides precision while the softmax operates at standard temperature, preserving gradient flow. Standard attention must choose between sharp retrieval and effective learning — LUCID gets both.
+                <strong>LUCID decouples retrieval sharpness from softmax entropy.</strong> The preconditioner provides precision while the softmax operates at standard entropy, preserving gradient flow. Standard attention must choose between sharp retrieval and effective learning — LUCID gets both.
             </div>
         </section>
 
